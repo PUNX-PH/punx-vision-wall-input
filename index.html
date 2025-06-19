@@ -2,35 +2,111 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>%UNITY_WEB_NAME%</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <title>Unity WebGL Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <script>
+      var unityInstance = null;
+      function unityShowBanner(msg, type) {
+        const banner = document.getElementById("unity-banner");
+        banner.innerHTML = msg;
+        banner.style.display = "block";
+      }
+    </script>
     <style>
       html, body {
         margin: 0;
         padding: 0;
-        background: #000;
-        overflow: hidden;
         height: 100%;
-        width: 100%;
+        background-color: #111;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
       }
-      canvas {
-        display: block;
-        width: 100vw;
-        height: 100vh;
+
+      #unity-container {
+        width: 100%;
+        height: 100%;
+        position: relative;
+      }
+
+      #unity-canvas {
+        width: 100%;
+        height: 100%;
+        display: none;
+      }
+
+      #loading-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 300px;
+        height: 25px;
+        background: #333;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 0 15px rgba(0, 255, 200, 0.3);
+      }
+
+      #loading-bar {
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, #00ffc3, #00a8ff);
+        animation: pulse 1s infinite alternate;
+        transition: width 0.3s ease;
+      }
+
+      @keyframes pulse {
+        0% { filter: brightness(1); }
+        100% { filter: brightness(1.5); }
+      }
+
+      #unity-banner {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: #ff5555;
+        color: white;
+        text-align: center;
+        padding: 6px 0;
+        display: none;
+        z-index: 10;
       }
     </style>
-    %UNITY_WEBGL_LOADER_GLUE%
   </head>
   <body>
-    <div id="unity-container" style="width:100vw; height:100vh">
+    <div id="unity-banner"></div>
+    <div id="unity-container">
       <canvas id="unity-canvas"></canvas>
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
-        </div>
+      <div id="loading-container">
+        <div id="loading-bar" id="bar"></div>
       </div>
     </div>
+
+    <script src="%UNITY_WEBGL_LOADER_URL%"></script>
     <script>
-      const canvas = document.querySelector("#unity-canvas");
-      createUnityInstance
+      createUnityInstance(document.querySelector("#unity-canvas"), {
+        dataUrl: "%UNITY_WEBGL_BUILD_URL%/Build.data",
+        frameworkUrl: "%UNITY_WEBGL_BUILD_URL%/Build.framework.js",
+        codeUrl: "%UNITY_WEBGL_BUILD_URL%/Build.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "%COMPANY_NAME%",
+        productName: "%PRODUCT_NAME%",
+        productVersion: "%PRODUCT_VERSION%",
+        showBanner: unityShowBanner,
+        onProgress: function(unityInstance, progress) {
+          const bar = document.getElementById("loading-bar");
+          bar.style.width = (progress * 100) + "%";
+          if (progress === 1) {
+            document.getElementById("loading-container").style.display = "none";
+            document.getElementById("unity-canvas").style.display = "block";
+          }
+        }
+      }).then((instance) => {
+        unityInstance = instance;
+      }).catch((message) => {
+        alert("Unity loading error: " + message);
+      });
+    </script>
+  </body>
+</html>
